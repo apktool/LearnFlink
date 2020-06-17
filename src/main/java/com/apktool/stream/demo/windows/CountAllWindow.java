@@ -8,7 +8,7 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 /**
  * @author apktool
  * @package com.apktool.stream.demo.windows
- * @class TumblingWindow
+ * @class CountAllWindow
  * @description TODO
  * @date 2020-06-11 22:45
  */
