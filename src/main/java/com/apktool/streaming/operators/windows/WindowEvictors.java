@@ -1,4 +1,4 @@
-package com.apktool.stream.demo.windows;
+package com.apktool.streaming.operators.windows;
 
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.api.java.tuple.Tuple;
