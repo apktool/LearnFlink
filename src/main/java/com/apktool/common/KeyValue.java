@@ -1,4 +1,4 @@
-package com.apktool.streaming.operators.windows;
+package com.apktool.common;
 
 
 import lombok.AllArgsConstructor;
