@@ -1,31 +1,27 @@
-package com.apktool.stream.demo.watermark;
+package com.apktool.streaming.watermark;
 
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.timestamps.BoundedOutOfOrdernessTimestampExtractor;
-import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.functions.AssignerWithPunctuatedWatermarks;
+import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author apktool
- * @package com.apktool.stream.demo.watermark
- * @class BoundedOutOfOrdernessWatermark
+ * @package com.apktool.streaming.watermark
+ * @class CustomPeriodicWatermark
  * @description TODO
- * @date 2020-06-10 21:55
- * <p>
- * 2020-06-13 09:50:30.0,2020-06-13 09:50:35.0,204
- * 2020-06-13 09:50:35.0,2020-06-13 09:50:40.0,208
- * 2020-06-13 09:50:40.0,2020-06-13 09:50:45.0,218
- * 2020-06-13 09:50:45.0,2020-06-13 09:50:50.0,603
+ * @date 2020-06-17 00:22
  */
-public class BoundedOutOfOrdernessWatermark {
+public class CustomPunctuatedWatermark {
     public static void main(String[] args) throws Exception {
         List<Tuple3<Long, String, Integer>> list = Arrays.asList(
             // 2020-06-13 17:50:34
@@ -48,12 +44,7 @@ public class BoundedOutOfOrdernessWatermark {
 
         DataStream<Tuple3<Long, String, Integer>> stream = env.fromCollection(list)
             .assignTimestampsAndWatermarks(
-                new BoundedOutOfOrdernessTimestampExtractor<Tuple3<Long, String, Integer>>(Time.seconds(3)) {
-                    @Override
-                    public long extractTimestamp(Tuple3<Long, String, Integer> element) {
-                        return element.f0;
-                    }
-                }
+                new PunctuatedAssigner()
             );
 
         Table table = tEnv.fromDataStream(stream, "t.rowtime, name, score");
@@ -68,5 +59,20 @@ public class BoundedOutOfOrdernessWatermark {
         tEnv.toAppendStream(result, Row.class).print();
 
         env.execute("Flink table Java API Skeleton");
+
+    }
+
+
+    static class PunctuatedAssigner implements AssignerWithPunctuatedWatermarks<Tuple3<Long, String, Integer>> {
+        @Nullable
+        @Override
+        public Watermark checkAndGetNextWatermark(Tuple3<Long, String, Integer> lastElement, long extractedTimestamp) {
+            return new Watermark(extractedTimestamp);
+        }
+
+        @Override
+        public long extractTimestamp(Tuple3<Long, String, Integer> element, long previousElementTimestamp) {
+            return element.f0;
+        }
     }
 }

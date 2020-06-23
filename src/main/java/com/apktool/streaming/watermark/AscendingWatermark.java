@@ -1,27 +1,30 @@
-package com.apktool.stream.demo.watermark;
+package com.apktool.streaming.watermark;
 
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.AssignerWithPunctuatedWatermarks;
-import org.apache.flink.streaming.api.watermark.Watermark;
+import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author apktool
- * @package com.apktool.stream.demo.watermark
- * @class CustomPeriodicWatermark
+ * @package com.apktool.streaming.watermark
+ * @class AscendingWatermark
  * @description TODO
- * @date 2020-06-17 00:22
+ * @date 2020-06-13 17:49
+ * <p>
+ * 2020-06-13 09:50:30.0,2020-06-13 09:50:35.0,204
+ * 2020-06-13 09:50:35.0,2020-06-13 09:50:40.0,208
+ * 2020-06-13 09:50:40.0,2020-06-13 09:50:45.0,218
+ * 2020-06-13 09:50:45.0,2020-06-13 09:50:50.0,603
  */
-public class CustomPunctuatedWatermark {
+public class AscendingWatermark {
     public static void main(String[] args) throws Exception {
         List<Tuple3<Long, String, Integer>> list = Arrays.asList(
             // 2020-06-13 17:50:34
@@ -44,7 +47,13 @@ public class CustomPunctuatedWatermark {
 
         DataStream<Tuple3<Long, String, Integer>> stream = env.fromCollection(list)
             .assignTimestampsAndWatermarks(
-                new PunctuatedAssigner()
+                new AscendingTimestampExtractor<Tuple3<Long, String, Integer>>() {
+                    @Override
+                    public long extractAscendingTimestamp(Tuple3<Long, String, Integer> element) {
+                        return element.f0;
+                    }
+                }
+
             );
 
         Table table = tEnv.fromDataStream(stream, "t.rowtime, name, score");
@@ -59,20 +68,5 @@ public class CustomPunctuatedWatermark {
         tEnv.toAppendStream(result, Row.class).print();
 
         env.execute("Flink table Java API Skeleton");
-
-    }
-
-
-    static class PunctuatedAssigner implements AssignerWithPunctuatedWatermarks<Tuple3<Long, String, Integer>> {
-        @Nullable
-        @Override
-        public Watermark checkAndGetNextWatermark(Tuple3<Long, String, Integer> lastElement, long extractedTimestamp) {
-            return new Watermark(extractedTimestamp);
-        }
-
-        @Override
-        public long extractTimestamp(Tuple3<Long, String, Integer> element, long previousElementTimestamp) {
-            return element.f0;
-        }
     }
 }

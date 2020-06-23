@@ -1,11 +1,11 @@
-package com.apktool.stream.demo.keyby;
+package com.apktool.streaming.keyby;
 
 
 import lombok.*;
 
 /**
  * @author apktool
- * @package com.apktool.stream.demo.keyby
+ * @package com.apktool.streaming.keyby
  * @class KeyValue
  * @description TODO
  * @date 2020-06-09 22:41

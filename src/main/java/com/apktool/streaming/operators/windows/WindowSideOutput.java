@@ -1,9 +1,9 @@
 package com.apktool.streaming.operators.windows;
 
 import com.apktool.common.KeyValue;
+import org.apache.commons.collections.map.HashedMap;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.tuple.Tuple;
-import org.apache.flink.calcite.shaded.com.google.common.collect.Maps;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class WindowSideOutput {
     public static void main(String[] args) throws Exception {
-        Map<String, OutputTag<KeyValue>> tag = Maps.newHashMap();
+        Map<String, OutputTag<KeyValue>> tag = new HashedMap();
         tag.put("a", new OutputTag<>("a", TypeInformation.of(KeyValue.class)));
         tag.put("b", new OutputTag<>("b", TypeInformation.of(KeyValue.class)));
 

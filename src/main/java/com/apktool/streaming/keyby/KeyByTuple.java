@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.apktool.stream.demo.keyby;
+package com.apktool.streaming.keyby;
 
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;

@@ -1,12 +1,11 @@
-package com.apktool.stream.demo.watermark;
+package com.apktool.streaming.watermark;
 
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
+import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
-import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
@@ -16,12 +15,12 @@ import java.util.List;
 
 /**
  * @author apktool
- * @package com.apktool.stream.demo.watermark
- * @class CustomPeriodicWatermark
+ * @package com.apktool.streaming.watermark
+ * @class CustomSourceFunctionWatermark
  * @description TODO
- * @date 2020-06-17 00:22
+ * @date 2020-06-17 00:34
  */
-public class CustomPeriodicWatermark {
+public class CustomSourceFunctionWatermark {
     public static void main(String[] args) throws Exception {
         List<Tuple3<Long, String, Integer>> list = Arrays.asList(
             // 2020-06-13 17:50:34
@@ -42,10 +41,26 @@ public class CustomPeriodicWatermark {
 
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
 
-        DataStream<Tuple3<Long, String, Integer>> stream = env.fromCollection(list)
-            .assignTimestampsAndWatermarks(
-                new BoundedOutOfOrdernessGenerator(Time.seconds(3).getSize())
-            );
+
+        DataStream<Tuple3<Long, String, Integer>> stream = env.addSource(
+            new SourceFunction<Tuple3<Long, String, Integer>>() {
+                @Override
+                public void run(SourceContext<Tuple3<Long, String, Integer>> ctx) throws Exception {
+                    for (Tuple3<Long, String, Integer> item : list) {
+                        long timestamp = item.f0;
+
+                        ctx.collectWithTimestamp(item, timestamp);
+                        ctx.emitWatermark(new Watermark(timestamp - 3));
+
+                    }
+                }
+
+                @Override
+                public void cancel() {
+
+                }
+            }
+        );
 
         Table table = tEnv.fromDataStream(stream, "t.rowtime, name, score");
         Table result = tEnv.sqlQuery(
@@ -59,31 +74,5 @@ public class CustomPeriodicWatermark {
         tEnv.toAppendStream(result, Row.class).print();
 
         env.execute("Flink table Java API Skeleton");
-
-    }
-
-
-    static class BoundedOutOfOrdernessGenerator implements AssignerWithPeriodicWatermarks<Tuple3<Long, String, Integer>> {
-
-        private long maxOutOfOrderness;
-
-        private long currentMaxTimestamp;
-
-        BoundedOutOfOrdernessGenerator(long maxOutOfOrderness) {
-            this.maxOutOfOrderness = maxOutOfOrderness;
-        }
-
-        @Override
-        public long extractTimestamp(Tuple3<Long, String, Integer> element, long previousElementTimestamp) {
-            long timestamp = element.f0;
-            currentMaxTimestamp = Math.max(timestamp, currentMaxTimestamp);
-            return timestamp;
-        }
-
-        @Override
-        public Watermark getCurrentWatermark() {
-            // return the watermark as current highest timestamp minus the out-of-orderness bound
-            return new Watermark(currentMaxTimestamp - maxOutOfOrderness);
-        }
     }
 }
