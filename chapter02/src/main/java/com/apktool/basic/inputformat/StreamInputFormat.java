@@ -14,7 +14,7 @@ import org.apache.flink.core.io.InputSplitAssigner;
 
 public class StreamInputFormat extends RichInputFormat<Tuple2<String, Integer>, InputSplit> {
     private String[] data = null;
-    private static AtomicInteger idx = new AtomicInteger(0);
+    private static volatile AtomicInteger idx = new AtomicInteger(0);
 
     @Override
     public void configure(Configuration configuration) {

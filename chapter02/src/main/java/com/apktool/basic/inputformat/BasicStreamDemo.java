@@ -15,7 +15,8 @@ public class BasicStreamDemo {
         TypeInformation<Tuple2<String, Integer>> info = TypeInformation.of(new TypeHint<>() {
         });
 
-        InputFormatSourceFunction<Tuple2<String, Integer>> function = new InputFormatSourceFunction<>(inputFormat, info);
+        // InputFormatSourceFunction<Tuple2<String, Integer>> function = new InputFormatSourceFunction<>(inputFormat, info);
+        InputFormatSourceFunction<Tuple2<String, Integer>> function = new DtInputFormatSourceFunction<>(inputFormat, info);
         env.addSource(function, "demo", info)
             .map(t -> new Person(t.f0, t.f1))
             .filter(t -> t.age > 18)
